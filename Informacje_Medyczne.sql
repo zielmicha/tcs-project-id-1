@@ -43,6 +43,7 @@ CREATE TABLE umowy(
 id int primary key,
 id_oddzialu references oddzialy(id),
 id_uslugodawcy references uslugodawcy(id),
-od date not null,
-do date not null
+data_od date not null,
+data_do date not null,
+CONSTRAINT daty data_od<=data_do
 );
