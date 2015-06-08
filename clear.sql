@@ -1,0 +1,10 @@
+drop table if exists osoby cascade;
+drop table if exists lekarze cascade;
+drop table if exists specjalizacje cascade;
+drop table if exists uslugodawcy cascade;
+drop table if exists uslugi cascade;
+drop table if exists recepty cascade;
+drop table if exists oddzialy cascade;
+drop table if exists apteki cascade;
+drop table if exists umowy cascade;
+drop function if exists pesel_trigger() cascade;
