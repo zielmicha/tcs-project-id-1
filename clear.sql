@@ -9,5 +9,8 @@ drop table if exists apteki cascade;
 drop table if exists recepty cascade;
 drop table if exists leki cascade;
 drop table if exists recepta_lek cascade;
+drop table if exists zgloszenie cascade;
 drop table if exists umowy cascade;
+drop function if exists czy_ma_umowe(placowka bigint, kiedy timestamp) cascade;
+drop function if exists czy_ubezpieczony(czlowiek bigint, kiedy timestamp) cascade;
 drop function if exists pesel_trigger() cascade;

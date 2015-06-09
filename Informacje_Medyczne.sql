@@ -74,6 +74,13 @@ create table recepta_lek (
        ilosc int
 );
 
+create table zgloszenie (
+       id serial primary key,
+       id_osoby serial references osoby(id),
+       id_oddzialu serial references oddzialy(id),
+       okres tsrange not null
+);
+
 create table umowy (
        id serial primary key,
        id_oddzialu serial references oddzialy(id),
@@ -81,12 +88,26 @@ create table umowy (
        okres tsrange not null
 );
 
+create function czy_ma_umowe(placowka bigint, kiedy timestamp) returns bool as $$
+       select count(*) > 0
+              from umowy where id_uslugodawcy = placowka
+                               and okres @> kiedy;
+$$ language sql;
+
+create function czy_ubezpieczony(czlowiek bigint, kiedy timestamp) returns bool as $$
+       select count(*) > 0
+              from zgloszenie where id_osoby = czlowiek
+                                and okres @> kiedy;
+$$ language sql;
+
 create view recepty_koszt as select recepty.id, recepty.id_osoby,
        sum(koszt * ilosc)
        from recepty
             left join recepta_lek on id_recepty = recepty.id
             join leki on id_leku = leki.id
             group by recepty.id;
+
+select * from recepty_koszt;
 
 create function pesel_trigger() returns trigger AS $$
 declare
