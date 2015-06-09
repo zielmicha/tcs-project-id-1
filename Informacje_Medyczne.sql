@@ -71,8 +71,10 @@ create table recepta_lek (
        id_recepty serial references recepty(id),
        id_leku serial references leki(id),
        refundacja int check (refundacja between 0 and 100),
-       ilosc int,
        zrealizowano int
+       choroba serial references choroby(id),
+       ilosc int
+
 );
 
 create table zgloszenie (
@@ -87,6 +89,12 @@ create table umowy (
        id_oddzialu serial references oddzialy(id),
        id_uslugodawcy serial references uslugodawcy(id),
        okres tsrange not null
+);
+
+create table choroby(
+      id serial primary key,
+      nazwa varchar
+
 );
 
 create function czy_ma_umowe(placowka bigint, kiedy timestamp) returns bool as $$
