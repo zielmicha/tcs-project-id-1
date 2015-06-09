@@ -70,7 +70,8 @@ create table leki (
 create table recepta_lek (
        id_recepty serial references recepty(id),
        id_leku serial references leki(id),
-       refundacja int check (refundacja between 0 and 100)
+       refundacja int check (refundacja between 0 and 100),
+       ilosc int
 );
 
 create table umowy (
@@ -80,6 +81,12 @@ create table umowy (
        okres tsrange not null
 );
 
+create view recepty_koszt as select recepty.id, recepty.id_osoby,
+       sum(koszt * ilosc)
+       from recepty
+            left join recepta_lek on id_recepty = recepty.id
+            join leki on id_leku = leki.id
+            group by recepty.id;
 
 create function pesel_trigger() returns trigger AS $$
 declare
