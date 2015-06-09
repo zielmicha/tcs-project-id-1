@@ -50,7 +50,7 @@ create table apteki (
        id serial primary key,
        nazwa varchar(150) not null,
        adres varchar(150) not null,
-       id_oddzialu serial references oddzialy(id)
+       id_oddzialu serial references oddzialy(id) not null
 );
 
 create table recepty (
@@ -106,8 +106,6 @@ create view recepty_koszt as select recepty.id, recepty.id_osoby,
             left join recepta_lek on id_recepty = recepty.id
             join leki on id_leku = leki.id
             group by recepty.id;
-
-select * from recepty_koszt;
 
 create function pesel_trigger() returns trigger AS $$
 declare
