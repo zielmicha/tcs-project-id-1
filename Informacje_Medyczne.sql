@@ -71,7 +71,8 @@ create table recepta_lek (
        id_recepty serial references recepty(id),
        id_leku serial references leki(id),
        refundacja int check (refundacja between 0 and 100),
-       ilosc int
+       ilosc int,
+       zrealizowano int
 );
 
 create table zgloszenie (
