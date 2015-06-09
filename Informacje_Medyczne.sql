@@ -24,17 +24,20 @@ create table uslugodawcy (
        adres varchar(150) not null
 );
 
+create table typy_uslug (
+       id serial primary key,
+       nazwa varchar,
+       koszt numeric(9, 2),
+       obowiazuje tsrange not null
+);
+
 create table uslugi (
        id serial primary key,
        id_lekarza serial references lekarze(id),
-       id_osoby serial references osoby(id),
-       id_uslugodawcy serial references uslugodawcy(id)
-);
-
-create table recepty (
-       id serial primary key,
-       id_lekarza serial references lekarze(id),
-       id_osoby serial references osoby(id)
+       id_osoby serial references osoby(id) not null,
+       id_uslugodawcy serial references uslugodawcy(id) not null,
+       typ serial references typy_uslug(id) not null,
+       opis text
 );
 
 create table oddzialy (
@@ -50,12 +53,31 @@ create table apteki (
        id_oddzialu serial references oddzialy(id)
 );
 
+create table recepty (
+       id serial primary key,
+       id_lekarza serial references lekarze(id) not null,
+       id_osoby serial references osoby(id) not null,
+       id_apteki serial references apteki(id)
+);
+
+create table leki (
+       id serial primary key,
+       nazwa text,
+       koszt numeric(9, 2),
+       okres tsrange
+);
+
+create table recepta_lek (
+       id_recepty serial references recepty(id),
+       id_leku serial references leki(id),
+       refundacja int check (refundacja between 0 and 100)
+);
+
 create table umowy (
        id serial primary key,
        id_oddzialu serial references oddzialy(id),
        id_uslugodawcy serial references uslugodawcy(id),
-       data_od date not null,
-       data_do date not null
+       okres tsrange not null
 );
 
 
