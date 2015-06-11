@@ -67,11 +67,17 @@ create table leki (
        okres tsrange
 );
 
+
+create table choroby(
+      id serial primary key,
+      nazwa varchar
+);
+
 create table recepta_lek (
        id_recepty serial references recepty(id),
        id_leku serial references leki(id),
        refundacja int check (refundacja between 0 and 100),
-       zrealizowano int
+       zrealizowano int,
        choroba serial references choroby(id),
        ilosc int
 
@@ -91,11 +97,6 @@ create table umowy (
        okres tsrange not null
 );
 
-create table choroby(
-      id serial primary key,
-      nazwa varchar
-
-);
 
 create function czy_ma_umowe(placowka bigint, kiedy timestamp) returns bool as $$
        select count(*) > 0
@@ -108,6 +109,12 @@ create function czy_ubezpieczony(czlowiek bigint, kiedy timestamp) returns bool 
               from zgloszenie where id_osoby = czlowiek
                                 and okres @> kiedy;
 $$ language sql;
+
+
+
+create view lekarze_dane as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel
+      from lekarze 
+            left join osoby on lekarze.id = osoby.id; 
 
 create view recepty_koszt as select recepty.id, recepty.id_osoby,
        sum(koszt * ilosc)
@@ -140,3 +147,4 @@ create trigger pesel_check before insert or update on osoby
 for each row execute procedure pesel_trigger();
 
 end;
+
