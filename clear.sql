@@ -13,10 +13,14 @@ drop table if exists zgloszenie cascade;
 drop table if exists umowy cascade;
 drop table if exists zatrudnieni cascade;
 drop table if exists choroby cascade;
+drop table if exists historia_chorob;
+
 
 drop function if exists czy_ma_umowe(placowka bigint, kiedy timestamp) cascade;
 drop function if exists czy_ubezpieczony(czlowiek int, kiedy timestamp) cascade;
 drop function if exists pesel_trigger() cascade;
 
+
+drop view if exists ubezpieczenia_pracownicy;
 drop view if exists lekarze_dane;
 drop view if exists recepty_koszt;
