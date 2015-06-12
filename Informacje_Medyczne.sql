@@ -4,7 +4,8 @@ create table osoby (
        id serial primary key,
        imie varchar(150) not null,
        nazwisko varchar(150) not null,
-       pesel char(11)
+       plec varchar(150) check(plec = 'kobieta' or plec = 'mezczyzna'), 
+       pesel char(11) 
 );
 
 create table uslugodawcy (
@@ -177,6 +178,9 @@ recepty.data_wystawienia as "data",leki.nazwa, recepta_lek.zrealizowano
             order by 2, 1, lekarze.id;
 
 
+
+
+
 create function pesel_trigger() returns trigger AS $$
 declare
    a int[];
@@ -186,6 +190,14 @@ begin
    if char_length(new.pesel) != 11 then
       raise exception 'Niepoprawny PESEL';
    end if;
+   if new.plec = 'kobieta' then
+      if a[10]%2 = 1 then
+          raise exception 'Niepoprawny PESEL';
+      end if;
+    else if a[10]%2 = 0 then
+          raise exception 'Niepoprawny PESEL';
+    end if;
+
    a := regexp_split_to_array(new.pesel, '')::int[];
    cyfra := 1*a[1] + 3*a[2] + 7*a[3] + 9*a[4] + 1*a[5] + 3*a[6] + 7*a[7] + 9*a[8]
     + 1*a[9] + 3*a[10] + a[11];
