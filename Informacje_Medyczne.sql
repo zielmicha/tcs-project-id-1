@@ -7,7 +7,6 @@ create table osoby (
        pesel char(11)
 );
 
-
 create table uslugodawcy (
        id serial primary key,
        nazwa varchar(150) not null,
@@ -15,23 +14,19 @@ create table uslugodawcy (
 );
 create table lekarze (
        id serial primary key,
-       id_osoby serial references osoby(id)
+       id_osoby serial references osoby(id) not null
 );
-
-
 
 create table zatrudnieni (
 		id serial primary key,
     miejsce_pracy serial references uslugodawcy (id),
     id_lekarza serial references lekarze (id),
-		stanowisko varchar(150)
+		stanowisko varchar(150) not null
 );
-
-
 
 create table specjalizacje (
        id serial primary key,
-       id_lekarza serial references lekarze(id),
+       id_lekarza serial references lekarze(id) not null,
        specjalizacja varchar(150) not null
 );
 
@@ -74,23 +69,22 @@ create table recepty (
 
 create table leki (
        id serial primary key,
-       nazwa text,
+       nazwa varchar(150) not null,
        koszt numeric(9, 2)
        
 );
 
 
-create table choroby(
+create table choroby (
       id serial primary key,
-      nazwa varchar
+      nazwa varchar(150)
 );
 
-
 create table recepta_lek (
-       id_recepty serial references recepty(id),
-       id_leku serial references leki(id),
-       refundacja int check (refundacja between 0 and 100),
-       zrealizowano int,
+       id_recepty serial references recepty(id) not null,
+       id_leku serial references leki(id) not null,
+       refundacja int default 0 check (refundacja between 0 and 100),
+       zrealizowano int default 0,
        choroba serial references choroby(id),
        ilosc int,
        okres tsrange
@@ -106,18 +100,18 @@ create table zgloszenie (
 
 create table umowy (
        id serial primary key,
-       id_oddzialu serial references oddzialy(id),
-       id_uslugodawcy serial references uslugodawcy(id),
+       id_oddzialu serial references oddzialy(id) not null,
+       id_uslugodawcy serial references uslugodawcy(id) not null,
        okres tsrange not null
 );
 
 create table historia_chorob (
 		id serial primary key,
 		id_osoby serial references osoby(id),
-		id_chroby serial references choroby(id),
-)
+		id_chroby serial references choroby(id)
+);
 
-create function czy_ubezpieczony(czlowiek int, kiedy timestamp default now()) returns bool as $$
+create function czy_ubezpieczony (czlowiek int, kiedy timestamp default now()) returns bool as $$
        select count(*) > 0
               from zgloszenie where id_osoby = czlowiek
                                 and okres @> kiedy;
@@ -136,12 +130,19 @@ create view ubezpieczenia_pracownicy as select osoby.id, osoby.imie, osoby.nazwi
 
  
 
-create function czy_ma_umowe(placowka bigint, kiedy timestamp) returns bool as $$
+create function czy_ma_umowe (placowka bigint, kiedy timestamp) returns bool as $$
        select count(*) > 0
               from umowy where id_uslugodawcy = placowka
                                and okres @> kiedy;
 $$ language sql;
 
+create view uslugodawcy_uslugi as select 
+    uslugodawcy.id, uslugodawcy.nazwa, uslugi.id as "id usługi",
+    typy_uslug.nazwa as "nazwa usługi"
+      from uslugodawcy 
+            join uslugi on uslugodawcy.id = uslugi.id_uslugodawcy
+            join typy_uslug on typy_uslug.id = uslugi.typ
+            order by 1, 3; 
 
 
 create view lekarze_dane as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel, zatrudnieni.miejsce_pracy, zatrudnieni.stanowisko
@@ -156,6 +157,25 @@ create view recepty_koszt as select recepty.id, recepty.id_osoby,
             left join recepta_lek on id_recepty = recepty.id
             join leki on id_leku = leki.id
             group by recepty.id;
+
+create view recepty_refundacja as select recepty.id, recepty.id_osoby,
+       sum( (koszt * ilosc * refundacja)::numeric / 100  ) as "refundacja"
+       from recepty
+            left join recepta_lek on id_recepty = recepty.id
+            join leki on id_leku = leki.id
+            group by recepty.id;
+
+create view lekarze_leki as select osoby.imie, osoby.nazwisko, lekarze.id, 
+recepty.id_osoby as "pacjent", recepty.id as "id recepty", 
+recepty.data_wystawienia as "data",leki.nazwa, recepta_lek.zrealizowano
+  
+       from lekarze
+            join osoby on osoby.id = lekarze.id_osoby
+            join recepty on lekarze.id = recepty.id_lekarza
+            join recepta_lek on id_recepty = recepty.id
+            join leki on recepta_lek.id_leku =  leki.id
+            order by 2, 1, lekarze.id;
+
 
 create function pesel_trigger() returns trigger AS $$
 declare
