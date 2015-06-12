@@ -7,6 +7,12 @@ create table osoby (
        pesel char(11)
 );
 
+
+create table zatrudnieni (
+		id serial primary key,
+		stanowisko varchar(150)
+);
+
 create table lekarze (
        id serial primary key,
        id_osoby serial references osoby(id)
@@ -98,6 +104,12 @@ create table umowy (
 );
 
 
+create view ubezpieczenia_pracownicy as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel
+			CASE WHEN czy_ubezpieczony(lekarze_id, current_timestamp) THEN 'UBEZPIECZONY' ELSE 'BRAK UBEZPIECZENIA' END
+			from lekarze
+				left join osoby on (lekarze.id = osoby.id)
+				order by osoby.nazwisko;  
+
 create function czy_ma_umowe(placowka bigint, kiedy timestamp) returns bool as $$
        select count(*) > 0
               from umowy where id_uslugodawcy = placowka
@@ -114,7 +126,8 @@ $$ language sql;
 
 create view lekarze_dane as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel
       from lekarze 
-            left join osoby on lekarze.id = osoby.id; 
+            left join osoby on lekarze.id = osoby.id
+            order by osoby.nazwisko; 
 
 create view recepty_koszt as select recepty.id, recepty.id_osoby,
        sum(koszt * ilosc)
