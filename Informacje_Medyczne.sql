@@ -4,7 +4,7 @@ create table osoby (
        id serial primary key,
        imie varchar(150) not null,
        nazwisko varchar(150) not null,
-       urodzony date check( urodzony <= CURRENT_DATE);
+       urodzony date check( urodzony <= CURRENT_DATE),
        plec varchar(150) check(plec = 'kobieta' or plec = 'mezczyzna') not null, 
        pesel char(11) 
 );
@@ -123,10 +123,11 @@ $$ language sql;
 
 	
 
-create view ubezpieczenia_pracownicy as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel
-			CASE WHEN czy_ubezpieczony(lekarze.id_osoby, current_timestamp) THEN 'UBEZPIECZONY' ELSE 'BRAK UBEZPIECZENIA' END
+create view ubezpieczenia_pracownicy as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel,
+			CASE WHEN czy_ubezpieczony(lekarze.id_osoby) THEN 'UBEZPIECZONY' ELSE 'BRAK UBEZPIECZENIA' END
 			from zatrudnieni
-				left join osoby on (zatrudnieni.id_osoby = osoby.id)
+				left join lekarze on zatrudnieni.id_lekarza = lekarze.id
+        join osoby on lekarze.id_osoby = osoby.id
 				order by osoby.nazwisko;
 
 
@@ -219,8 +220,8 @@ begin
           else 
               year := 1800 + year;
     end case;
-    if extract(year new.urodzony) != year || extract(month new.urodzony) != month || extract(day new.urodzony) then
-        raise exception 'Niepoprawny PESEL'
+    if extract(year from new.urodzony) != year || extract(month from new.urodzony) != month || extract(day from new.urodzony) then
+        raise exception 'Niepoprawny PESEL';
     end if;
  
 
