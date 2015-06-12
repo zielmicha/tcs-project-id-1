@@ -114,8 +114,8 @@ create table umowy (
 create table historia_chorob (
 		id serial primary key,
 		id_osoby serial references osoby(id),
-		id_chroby serial references choroby(id),
-)
+		id_chroby serial references choroby(id)
+);
 
 create function czy_ubezpieczony(czlowiek int, kiedy timestamp default now()) returns bool as $$
        select count(*) > 0
@@ -127,21 +127,12 @@ $$ language sql;
 
 	
 
-<<<<<<< HEAD
-create view ubezpieczenia_pracownicy as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel
-			CASE WHEN czy_ubezpieczony(lekarze.id_osoby, current_timestamp) THEN 'UBEZPIECZONY' ELSE 'BRAK UBEZPIECZENIA' END
-			from zatrudnieni
-				left join osoby on (zatrudnieni.id_osoby = osoby.id)
-				order by osoby.nazwisko;
 
-
-=======
-create view ubezpieczenia_pracownicy as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel,
+create view ubezpieczenia_pracownicy as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel,
 			CASE WHEN czy_ubezpieczony(osoby.id) THEN 'UBEZPIECZONY' ELSE 'BRAK UBEZPIECZENIA' end
 			from zatrudnieni
 				left join osoby on (zatrudnieni.id = osoby.id)
 				order by osoby.nazwisko;  
->>>>>>> d308ab340db48b588964b1b2e8c98e6b274c2d52
 
  
 
@@ -153,17 +144,11 @@ $$ language sql;
 
 
 
-<<<<<<< HEAD
-create view lekarze_dane as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel, specjalizacje.specjalizacja
-      from lekarze 
-            left join osoby on lekarze.id_osoby = osoby.id
-            left join specjalizacje on lekarze.id = specjalizacje.id_lekarza
-=======
+
 create view lekarze_dane as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel, zatrudnieni.miejsce_pracy, zatrudnieni.stanowisko
       from lekarze 
             left join osoby on lekarze.id = osoby.id
             left join zatrudnieni on lekarze.id = zatrudnieni.id_lekarza
->>>>>>> d308ab340db48b588964b1b2e8c98e6b274c2d52
             order by osoby.nazwisko; 
 
 create view recepty_koszt as select recepty.id, recepty.id_osoby,
