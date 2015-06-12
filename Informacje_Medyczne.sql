@@ -4,6 +4,7 @@ create table osoby (
        id serial primary key,
        imie varchar(150) not null,
        nazwisko varchar(150) not null,
+       urodzony date not null;
        plec varchar(150) check(plec = 'kobieta' or plec = 'mezczyzna'), 
        pesel char(11) 
 );
@@ -180,25 +181,49 @@ recepty.data_wystawienia as "data",leki.nazwa, recepta_lek.zrealizowano
 
 
 
-
 create function pesel_trigger() returns trigger AS $$
 declare
    a int[];
    cyfra int;
+   day int;
+   year int;
+   month int;
+   yearspec int;
 begin
 
    if char_length(new.pesel) != 11 then
       raise exception 'Niepoprawny PESEL';
    end if;
+   a := regexp_split_to_array(new.pesel, '')::int[];
    if new.plec = 'kobieta' then
       if a[10]%2 = 1 then
           raise exception 'Niepoprawny PESEL';
       end if;
     else if a[10]%2 = 0 then
           raise exception 'Niepoprawny PESEL';
+         end if;
+    end if;
+    day := 10 * a[4] + a[5];
+    yearspec := (10 * a[2] + a[3])/20;
+    month := (10 * a[2] + a[3])%20;
+    year := 10 * a[1] + a[4];
+    case yearspec 
+          when 0 then 
+              year := 1900 + year;
+          when 1 then 
+              year := 2000 + year;
+          when 2 then 
+               year := 2100 + year;
+          when 3 then 
+               year := 2200 + year;
+          else 
+              year := 1800 + year;
+    end case;
+    if extract(year new.urodzony) != year || extract(month new.urodzony) != month || extract(day new.urodzony) then
+        raise exception 'Niepoprawny PESEL'
     end if;
 
-   a := regexp_split_to_array(new.pesel, '')::int[];
+
    cyfra := 1*a[1] + 3*a[2] + 7*a[3] + 9*a[4] + 1*a[5] + 3*a[6] + 7*a[7] + 9*a[8]
     + 1*a[9] + 3*a[10] + a[11];
    if cyfra % 10 != 0 then
