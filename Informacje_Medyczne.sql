@@ -85,6 +85,7 @@ create table choroby(
       nazwa varchar
 );
 
+
 create table recepta_lek (
        id_recepty serial references recepty(id),
        id_leku serial references leki(id),
@@ -110,12 +111,21 @@ create table umowy (
        okres tsrange not null
 );
 
+create table historia_chorob (
+		id serial primary key,
+		id_osoby serial references osoby(id),
+		id_chroby serial references choroby(id),
+)
+
 create function czy_ubezpieczony(czlowiek int, kiedy timestamp default now()) returns bool as $$
        select count(*) > 0
               from zgloszenie where id_osoby = czlowiek
                                 and okres @> kiedy;
+                                
+                 
 $$ language sql;
 
+	
 
 <<<<<<< HEAD
 create view ubezpieczenia_pracownicy as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel
@@ -128,10 +138,12 @@ create view ubezpieczenia_pracownicy as select osoby.id, osoby.imie, osoby.nazwi
 =======
 create view ubezpieczenia_pracownicy as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel,
 			CASE WHEN czy_ubezpieczony(osoby.id) THEN 'UBEZPIECZONY' ELSE 'BRAK UBEZPIECZENIA' end
-			from lekarze
-				left join osoby on (lekarze.id = osoby.id)
+			from zatrudnieni
+				left join osoby on (zatrudnieni.id = osoby.id)
 				order by osoby.nazwisko;  
 >>>>>>> d308ab340db48b588964b1b2e8c98e6b274c2d52
+
+ 
 
 create function czy_ma_umowe(placowka bigint, kiedy timestamp) returns bool as $$
        select count(*) > 0
