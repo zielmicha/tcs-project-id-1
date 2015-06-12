@@ -8,26 +8,31 @@ create table osoby (
 );
 
 
-create table zatrudnieni (
-		id serial primary key,
-		stanowisko varchar(150)
+create table uslugodawcy (
+       id serial primary key,
+       nazwa varchar(150) not null,
+       adres varchar(150) not null
 );
-
 create table lekarze (
        id serial primary key,
        id_osoby serial references osoby(id)
 );
 
+
+
+create table zatrudnieni (
+		id serial primary key,
+    miejsce_pracy serial references uslugodawcy (id),
+    id_lekarza serial references lekarze (id),
+		stanowisko varchar(150)
+);
+
+
+
 create table specjalizacje (
        id serial primary key,
        id_lekarza serial references lekarze(id),
        specjalizacja varchar(150) not null
-);
-
-create table uslugodawcy (
-       id serial primary key,
-       nazwa varchar(150) not null,
-       adres varchar(150) not null
 );
 
 create table typy_uslug (
@@ -103,9 +108,15 @@ create table umowy (
        okres tsrange not null
 );
 
+create function czy_ubezpieczony(czlowiek int, kiedy timestamp default now()) returns bool as $$
+       select count(*) > 0
+              from zgloszenie where id_osoby = czlowiek
+                                and okres @> kiedy;
+$$ language sql;
 
-create view ubezpieczenia_pracownicy as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel
-			CASE WHEN czy_ubezpieczony(lekarze_id, current_timestamp) THEN 'UBEZPIECZONY' ELSE 'BRAK UBEZPIECZENIA' END
+
+create view ubezpieczenia_pracownicy as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel,
+			CASE WHEN czy_ubezpieczony(osoby.id) THEN 'UBEZPIECZONY' ELSE 'BRAK UBEZPIECZENIA' end
 			from lekarze
 				left join osoby on (lekarze.id = osoby.id)
 				order by osoby.nazwisko;  
@@ -116,17 +127,12 @@ create function czy_ma_umowe(placowka bigint, kiedy timestamp) returns bool as $
                                and okres @> kiedy;
 $$ language sql;
 
-create function czy_ubezpieczony(czlowiek bigint, kiedy timestamp) returns bool as $$
-       select count(*) > 0
-              from zgloszenie where id_osoby = czlowiek
-                                and okres @> kiedy;
-$$ language sql;
 
 
-
-create view lekarze_dane as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel
+create view lekarze_dane as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel, zatrudnieni.miejsce_pracy, zatrudnieni.stanowisko
       from lekarze 
             left join osoby on lekarze.id = osoby.id
+            left join zatrudnieni on lekarze.id = zatrudnieni.id_lekarza
             order by osoby.nazwisko; 
 
 create view recepty_koszt as select recepty.id, recepty.id_osoby,
