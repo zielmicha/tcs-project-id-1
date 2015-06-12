@@ -34,14 +34,14 @@ create table specjalizacje (
 
 create table typy_uslug (
        id serial primary key,
-       nazwa varchar,
+       nazwa varchar not null,
        koszt numeric(9, 2),
        obowiazuje tsrange not null
 );
 
 create table uslugi (
        id serial primary key,
-       id_lekarza serial references lekarze(id),
+       id_lekarza serial references lekarze(id) not null,
        id_osoby serial references osoby(id) not null,
        id_uslugodawcy serial references uslugodawcy(id) not null,
        typ serial references typy_uslug(id) not null,
@@ -66,7 +66,7 @@ create table recepty (
        id_lekarza serial references lekarze(id) not null,
        id_osoby serial references osoby(id) not null,
        id_apteki serial references apteki(id),
-       data_wystawienia timestamp
+       data_wystawienia timestamp not null
 );
 
 create table leki (
@@ -79,7 +79,7 @@ create table leki (
 
 create table choroby (
       id serial primary key,
-      nazwa varchar(150)
+      nazwa varchar(150) not null
 );
 
 create table recepta_lek (
@@ -95,8 +95,8 @@ create table recepta_lek (
 
 create table zgloszenie (
        id serial primary key,
-       id_osoby serial references osoby(id),
-       id_oddzialu serial references oddzialy(id),
+       id_osoby serial references osoby(id) not null,
+       id_oddzialu serial references oddzialy(id) not null,
        okres tsrange not null
 );
 
@@ -109,8 +109,8 @@ create table umowy (
 
 create table historia_chorob (
 		id serial primary key,
-		id_osoby serial references osoby(id),
-		id_chroby serial references choroby(id)
+		id_osoby serial references osoby(id) not null,
+		id_chroby serial references choroby(id) not null
 );
 
 create function czy_ubezpieczony (czlowiek int, kiedy timestamp default now()) returns bool as $$
