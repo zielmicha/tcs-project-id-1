@@ -63,14 +63,15 @@ create table recepty (
        id serial primary key,
        id_lekarza serial references lekarze(id) not null,
        id_osoby serial references osoby(id) not null,
-       id_apteki serial references apteki(id)
+       id_apteki serial references apteki(id),
+       data_wystawienia timestamp
 );
 
 create table leki (
        id serial primary key,
        nazwa text,
-       koszt numeric(9, 2),
-       okres tsrange
+       koszt numeric(9, 2)
+       
 );
 
 
@@ -85,7 +86,8 @@ create table recepta_lek (
        refundacja int check (refundacja between 0 and 100),
        zrealizowano int,
        choroba serial references choroby(id),
-       ilosc int
+       ilosc int,
+       okres tsrange
 
 );
 
@@ -104,11 +106,13 @@ create table umowy (
 );
 
 
-create view ubezpieczenia_pracownicy as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel
-			CASE WHEN czy_ubezpieczony(lekarze_id, current_timestamp) THEN 'UBEZPIECZONY' ELSE 'BRAK UBEZPIECZENIA' END
-			from lekarze
-				left join osoby on (lekarze.id = osoby.id)
-				order by osoby.nazwisko;  
+create view ubezpieczenia_pracownicy as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel
+			CASE WHEN czy_ubezpieczony(lekarze.id_osoby, current_timestamp) THEN 'UBEZPIECZONY' ELSE 'BRAK UBEZPIECZENIA' END
+			from zatrudnieni
+				left join osoby on (zatrudnieni.id_osoby = osoby.id)
+				order by osoby.nazwisko;
+
+
 
 create function czy_ma_umowe(placowka bigint, kiedy timestamp) returns bool as $$
        select count(*) > 0
@@ -124,9 +128,10 @@ $$ language sql;
 
 
 
-create view lekarze_dane as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel
+create view lekarze_dane as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel, specjalizacje.specjalizacja
       from lekarze 
-            left join osoby on lekarze.id = osoby.id
+            left join osoby on lekarze.id_osoby = osoby.id
+            left join specjalizacje on lekarze.id = specjalizacje.id_lekarza
             order by osoby.nazwisko; 
 
 create view recepty_koszt as select recepty.id, recepty.id_osoby,
