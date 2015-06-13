@@ -154,6 +154,13 @@ create view lekarze_dane as select lekarze.id, osoby.imie, osoby.nazwisko, osoby
             left join zatrudnieni on lekarze.id = zatrudnieni.id_lekarza
             order by osoby.nazwisko; 
 
+create view lekarze_specjalizacje as SELECT s.id,  array_agg(g.specjalizacja) as specjalizacja        
+      FROM lekarze s
+        LEFT JOIN specjalizacje g ON g.id_lekarza = s.id
+        GROUP BY s.id
+        order by 1;
+
+
 create view recepty_koszt as select recepty.id, recepty.id_osoby,
        sum(koszt * ilosc)
        from recepty
