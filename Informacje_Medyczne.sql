@@ -149,11 +149,6 @@ create function czy_ubezpieczony (czlowiek int, kiedy timestamp default now()) r
                  
 $$ language sql;
 
-create view zatrudnieni_naleznosci_uslugi as select osoby.id, osoby.imie, osoby.nazwisko, 
-            round(sum(zatrudnieni.procent_od_uslugi * uslugi.koszt )/100 ,2)
-            from osoby 
-                left join personel_medyczny on (osoby.id = personel_medyczny.id_osoby)
-                left join uslugi on (personel_medyczny.id = uslugi.id_członka_personelu_medycznego)
 create view osoby_naleznosci as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel, sum(typy_uslug.koszt)
                 from osoby 
                   left join uslugi on(osoby.id = uslugi.id_osoby ) 
