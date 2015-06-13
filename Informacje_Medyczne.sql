@@ -6,7 +6,7 @@ create table osoby (
        nazwisko varchar(150) not null,
        urodzony date check( urodzony <= CURRENT_DATE) not null,
        plec varchar(150) check(plec = 'kobieta' or plec = 'mezczyzna') not null, 
-       pesel char(11) 
+       pesel char(11) unique not null
 );
 
 create table uslugodawcy (
