@@ -21,14 +21,15 @@ create table personel_medyczny (
 
 create table zatrudnieni (
     id serial primary key,
+    id_osoby serial references osoby(id) not null,
     miejsce_pracy serial references uslugodawcy (id),
-    id_członka_personelu_medycznego serial references personel_medyczny (id),
+    id_czlonka_personelu_medycznego serial references personel_medyczny (id),
     stanowisko varchar(150) not null
 );
 
 create table specjalizacje (
        id serial primary key,
-       id_członka_personelu_medycznego serial references personel_medyczny(id) not null,
+       id_czlonka_personelu_medycznego serial references personel_medyczny(id) not null,
        specjalizacja varchar(150) not null
 );
 
@@ -42,13 +43,12 @@ create table typy_uslug (
 
 create table uslugi (
        id serial primary key,
-       id_członka_personelu_medycznego serial references personel_medyczny(id) not null,
+       id_czlonka_personelu_medycznego serial references personel_medyczny(id) not null,
        id_osoby serial references osoby(id) not null,
        id_uslugodawcy serial references uslugodawcy(id) not null,
        typ serial references typy_uslug(id) not null,
        opis text,
        oplacona varchar check(oplacona = 'tak' or oplacona = 'nie') not null
-
 );
 
 create table oddzialy (
@@ -66,7 +66,7 @@ create table apteki (
 
 create table recepty (
        id serial primary key,
-       id_członka_personelu_medycznego serial references personel_medyczny(id) not null,
+       id_czlonka_personelu_medycznego serial references personel_medyczny(id) not null,
        id_osoby serial references osoby(id) not null,
        id_apteki serial references apteki(id),
        data_wystawienia timestamp not null
@@ -118,7 +118,7 @@ create table historia_chorob (
 
 create table zatrunieni_wyplaty (
     id serial primary key,
-    id_osoby serial references zatrudnieni(id)  not null,
+    id_zatrudnionego serial references zatrudnieni(id)  not null,
     pensja_miesieczna numeric(9,2),
     --pensja_tygodniowa numeric(9,2),
     procent_od_uslugi numeric(9,2) check( procent_od_uslugi <= 100 and procent_od_uslugi>=0) 
@@ -128,10 +128,18 @@ create table zatrunieni_wyplaty (
 
 create table naleznosci_za_uslugi (
     id serial primary key,
-    id_czlonka_personelu_medycznego serial references zatrudnieni(id) not null,
+    id_zatrudnionego serial references zatrudnieni(id) not null,
     id_uslugi serial references uslugi(id) not null,
-    koszt numeric(9,2)
+    koszt numeric(9,2),
+    zaplacono varchar(5) check(zaplacono = 'tak' or zaplacono = 'nie')
+
 );
+/*
+create table oplaty_za_uslugi (
+    id serial primary key,
+    id_osoby references references(osoby.id) not null,
+    id_uslugi serial references uslugi(id) not null,
+);*/
 
 create table historia_wyplat (
     id serial primary key,
@@ -141,6 +149,8 @@ create table historia_wyplat (
 );
 
 
+
+
 create function czy_ubezpieczony (czlowiek int, kiedy timestamp default now()) returns bool as $$
        select count(*) > 0
               from zgloszenie where id_osoby = czlowiek
@@ -148,6 +158,14 @@ create function czy_ubezpieczony (czlowiek int, kiedy timestamp default now()) r
                                 
                  
 $$ language sql;
+
+create view personel_wyplaty_za_uslugi as select osoby.id, osoby.imie, osoby.nazwisko,
+                  round(sum(zatrunieni_wyplaty.procent_od_uslugi * naleznosci_za_uslugi.koszt )/100, 2)
+                  from osoby 
+                    left join zatrudnieni on (zatrudnieni.id_osoby = osoby.id)
+                    left join zatrunieni_wyplaty on ( zatrunieni_wyplaty.id_zatrudnionego = zatrudnieni.id)
+                    left join naleznosci_za_uslugi on (zatrudnieni.id = naleznosci_za_uslugi.id_zatrudnionego)
+                    group by osoby.id;
 
 create view osoby_naleznosci as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel, sum(typy_uslug.koszt)
                 from osoby 
@@ -159,7 +177,7 @@ create view osoby_naleznosci as select osoby.id, osoby.imie, osoby.nazwisko, oso
 create view ubezpieczenia_pracownicy as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel,
       CASE WHEN czy_ubezpieczony(personel_medyczny.id_osoby) THEN 'UBEZPIECZONY' ELSE 'BRAK UBEZPIECZENIA' END
       from zatrudnieni
-        left join personel_medyczny on zatrudnieni.id_członka_personelu_medycznego = personel_medyczny.id
+        left join personel_medyczny on zatrudnieni.id_czlonka_personelu_medycznego = personel_medyczny.id
         join osoby on personel_medyczny.id_osoby = osoby.id
         order by osoby.nazwisko;
 
@@ -184,12 +202,12 @@ create view uslugodawcy_uslugi as select
 create view personel_medyczny_dane as select personel_medyczny.id, osoby.imie, osoby.nazwisko, osoby.pesel, zatrudnieni.miejsce_pracy, zatrudnieni.stanowisko
       from personel_medyczny 
             left join osoby on personel_medyczny.id = osoby.id
-            left join zatrudnieni on personel_medyczny.id = zatrudnieni.id_członka_personelu_medycznego
+            left join zatrudnieni on personel_medyczny.id = zatrudnieni.id_czlonka_personelu_medycznego
             order by osoby.nazwisko; 
 
 create view personel_medyczny_specjalizacje as SELECT s.id,  array_agg(g.specjalizacja) as specjalizacja        
       FROM personel_medyczny s
-        LEFT JOIN specjalizacje g ON g.id_członka_personelu_medycznego = s.id
+        LEFT JOIN specjalizacje g ON g.id_czlonka_personelu_medycznego = s.id
         GROUP BY s.id
         order by 1;
 
@@ -220,7 +238,7 @@ recepty.data_wystawienia as "data",leki.nazwa, recepta_lek.zrealizowano
   
        from personel_medyczny
             join osoby on osoby.id = personel_medyczny.id_osoby
-            join recepty on personel_medyczny.id = recepty.id_członka_personelu_medycznego
+            join recepty on personel_medyczny.id = recepty.id_czlonka_personelu_medycznego
             join recepta_lek on id_recepty = recepty.id
             join leki on recepta_lek.id_leku =  leki.id
             order by 2, 1, personel_medyczny.id;
