@@ -259,3 +259,4 @@ create trigger pesel_check before insert or update on osoby
 for each row execute procedure pesel_trigger();
 
 end;
+
