@@ -120,8 +120,17 @@ create table zatrunieni_wyplaty (
     id serial primary key,
     id_osoby serial references zatrudnieni(id)  not null,
     pensja_miesieczna numeric(9,2),
-    pensja_tygodniowa numeric(9,2),
+    --pensja_tygodniowa numeric(9,2),
     procent_od_uslugi numeric(9,2) check( procent_od_uslugi <= 100 and procent_od_uslugi>=0) 
+);
+
+
+
+create table naleznosci_za_uslugi (
+    id serial primary key,
+    id_czlonka_personelu_medycznego references zatrudnieni(id) not null,
+    id_uslugi references uslugi(id) not null,
+    koszt numeric(9,2)
 );
 
 create table historia_wyplat (
@@ -131,6 +140,7 @@ create table historia_wyplat (
     tytul varchar(150) not null
 );
 
+
 create function czy_ubezpieczony (czlowiek int, kiedy timestamp default now()) returns bool as $$
        select count(*) > 0
               from zgloszenie where id_osoby = czlowiek
@@ -139,7 +149,12 @@ create function czy_ubezpieczony (czlowiek int, kiedy timestamp default now()) r
                  
 $$ language sql;
 
-create view naleznosci as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel, sum(typy_uslug.koszt)
+create view zatrudnieni_naleznosci_uslugi as select osoby.id, osoby.imie, osoby.nazwisko, 
+            round(sum(zatrudnieni.procent_od_uslugi * uslugi.koszt )/100 ,2)
+            from osoby 
+                left join personel_medyczny on (osoby.id = personel_medyczny.id_osoby)
+                left join uslugi on (personel_medyczny.id = uslugi.id_członka_personelu_medycznego)
+create view osoby_naleznosci as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel, sum(typy_uslug.koszt)
                 from osoby 
                   left join uslugi on(osoby.id = uslugi.id_osoby ) 
                   left join typy_uslug on (uslugi.typ = typy_uslug.id)
