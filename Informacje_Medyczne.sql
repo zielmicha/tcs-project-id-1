@@ -14,7 +14,7 @@ create table uslugodawcy (
        nazwa varchar(150) not null,
        adres varchar(150) not null
 );
-create table lekarze (
+create table personel_medyczny (
        id serial primary key,
        id_osoby serial references osoby(id) not null
 );
@@ -22,13 +22,13 @@ create table lekarze (
 create table zatrudnieni (
     id serial primary key,
     miejsce_pracy serial references uslugodawcy (id),
-    id_lekarza serial references lekarze (id),
-    stanowisko varchar(150) not null
+    id_członka_personelu_medycznego serial references personel_medyczny (id),
+    stanowisko varchar(150) not null,
 );
 
 create table specjalizacje (
        id serial primary key,
-       id_lekarza serial references lekarze(id) not null,
+       id_członka_personelu_medycznego serial references personel_medyczny(id) not null,
        specjalizacja varchar(150) not null
 );
 
@@ -37,16 +37,18 @@ create table typy_uslug (
        nazwa varchar not null,
        koszt numeric(9, 2),
        obowiazuje tsrange not null
+
 );
 
 create table uslugi (
        id serial primary key,
-       id_lekarza serial references lekarze(id) not null,
+       id_członka_personelu_medycznego serial references personel_medyczny(id) not null,
        id_osoby serial references osoby(id) not null,
        id_uslugodawcy serial references uslugodawcy(id) not null,
        typ serial references typy_uslug(id) not null,
        opis text,
        oplacona varchar check(oplacona = 'tak' or oplacona = 'nie') not null
+
 );
 
 create table oddzialy (
@@ -64,7 +66,7 @@ create table apteki (
 
 create table recepty (
        id serial primary key,
-       id_lekarza serial references lekarze(id) not null,
+       id_członka_personelu_medycznego serial references personel_medyczny(id) not null,
        id_osoby serial references osoby(id) not null,
        id_apteki serial references apteki(id),
        data_wystawienia timestamp not null
@@ -131,10 +133,10 @@ create view naleznosci as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pes
                   group by osoby.id;
 
 create view ubezpieczenia_pracownicy as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel,
-      CASE WHEN czy_ubezpieczony(lekarze.id_osoby) THEN 'UBEZPIECZONY' ELSE 'BRAK UBEZPIECZENIA' END
+      CASE WHEN czy_ubezpieczony(personel_medyczny.id_osoby) THEN 'UBEZPIECZONY' ELSE 'BRAK UBEZPIECZENIA' END
       from zatrudnieni
-        left join lekarze on zatrudnieni.id_lekarza = lekarze.id
-        join osoby on lekarze.id_osoby = osoby.id
+        left join personel_medyczny on zatrudnieni.id_członka_personelu_medycznego = personel_medyczny.id
+        join osoby on personel_medyczny.id_osoby = osoby.id
         order by osoby.nazwisko;
 
 
@@ -155,15 +157,15 @@ create view uslugodawcy_uslugi as select
             order by 1, 3; 
 
 
-create view lekarze_dane as select lekarze.id, osoby.imie, osoby.nazwisko, osoby.pesel, zatrudnieni.miejsce_pracy, zatrudnieni.stanowisko
-      from lekarze 
-            left join osoby on lekarze.id = osoby.id
-            left join zatrudnieni on lekarze.id = zatrudnieni.id_lekarza
+create view personel_medyczny_dane as select personel_medyczny.id, osoby.imie, osoby.nazwisko, osoby.pesel, zatrudnieni.miejsce_pracy, zatrudnieni.stanowisko
+      from personel_medyczny 
+            left join osoby on personel_medyczny.id = osoby.id
+            left join zatrudnieni on personel_medyczny.id = zatrudnieni.id_członka_personelu_medycznego
             order by osoby.nazwisko; 
 
-create view lekarze_specjalizacje as SELECT s.id,  array_agg(g.specjalizacja) as specjalizacja        
-      FROM lekarze s
-        LEFT JOIN specjalizacje g ON g.id_lekarza = s.id
+create view personel_medyczny_specjalizacje as SELECT s.id,  array_agg(g.specjalizacja) as specjalizacja        
+      FROM personel_medyczny s
+        LEFT JOIN specjalizacje g ON g.id_członka_personelu_medycznego = s.id
         GROUP BY s.id
         order by 1;
 
@@ -188,16 +190,16 @@ create view recepty_refundacja as select recepty.id, recepty.id_osoby,
             join leki on id_leku = leki.id
             group by recepty.id;
 
-create view lekarze_leki as select osoby.imie, osoby.nazwisko, lekarze.id, 
+create view personel_medyczny_leki as select osoby.imie, osoby.nazwisko, personel_medyczny.id, 
 recepty.id_osoby as "pacjent", recepty.id as "id recepty", 
 recepty.data_wystawienia as "data",leki.nazwa, recepta_lek.zrealizowano
   
-       from lekarze
-            join osoby on osoby.id = lekarze.id_osoby
-            join recepty on lekarze.id = recepty.id_lekarza
+       from personel_medyczny
+            join osoby on osoby.id = personel_medyczny.id_osoby
+            join recepty on personel_medyczny.id = recepty.id_członka_personelu_medycznego
             join recepta_lek on id_recepty = recepty.id
             join leki on recepta_lek.id_leku =  leki.id
-            order by 2, 1, lekarze.id;
+            order by 2, 1, personel_medyczny.id;
 
 
 
