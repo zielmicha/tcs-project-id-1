@@ -118,10 +118,17 @@ create table historia_chorob (
 
 create table zatrunieni_wyplaty (
     id serial primary key,
-    id_osoby serial references zatrudnieni(id) not null,
+    id_osoby serial references zatrudnieni(id)  not null,
     pensja_miesieczna numeric(9,2),
     pensja_tygodniowa numeric(9,2),
     procent_od_uslugi numeric(9,2) check( procent_od_uslugi <= 100 and procent_od_uslugi>=0) 
+);
+
+create table historia_wyplat (
+    id serial primary key,
+    id_osoby serial references zatrudnieni(id) not null,
+    wyplata numeric(9,2) check(wyplata > 0) not null,
+    tytul varchar(150) not null
 );
 
 create function czy_ubezpieczony (czlowiek int, kiedy timestamp default now()) returns bool as $$
