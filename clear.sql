@@ -1,28 +1,33 @@
-drop table if exists osoby cascade;
-drop table if exists uslugodawcy cascade;
-drop table if exists lekarze cascade;
-drop table if exists zatrudnieni cascade;
-drop table if exists specjalizacje cascade;
-drop table if exists typy_uslug cascade;
-drop table if exists uslugi cascade;
-drop table if exists oddzialy cascade;
-drop table if exists apteki cascade;
-drop table if exists recepty cascade;
-drop table if exists leki cascade;
-drop table if exists choroby cascade;
-drop table if exists recepta_lek cascade;
-drop table if exists zgloszenie cascade;
-drop table if exists umowy cascade;
-drop table if exists zatrudnieni cascade;
-drop table if exists choroby cascade;
-drop table if exists historia_chorob;
-
-
-drop function if exists czy_ma_umowe(placowka bigint, kiedy timestamp) cascade;
-drop function if exists czy_ubezpieczony(czlowiek int, kiedy timestamp) cascade;
-drop function if exists pesel_trigger() cascade;
-
-
-drop view if exists ubezpieczenia_pracownicy;
-drop view if exists lekarze_dane;
-drop view if exists recepty_koszt;
+-- Skrypt usuwający wszystkie utworzone tabele --
+DROP table IF EXISTS osoby CASCADE;
+DROP table IF EXISTS uslugodawcy CASCADE;
+DROP table IF EXISTS personel_medyczny CASCADE;
+DROP table IF EXISTS zatrudnieni CASCADE;
+DROP table IF EXISTS specjalizacje CASCADE;
+DROP table IF EXISTS typy_uslug CASCADE;
+DROP table IF EXISTS uslugi CASCADE;
+DROP table IF EXISTS oddzialy CASCADE;
+DROP table IF EXISTS apteki CASCADE;
+DROP table IF EXISTS recepty CASCADE;
+DROP table IF EXISTS leki CASCADE;
+DROP table IF EXISTS choroby CASCADE;
+DROP table IF EXISTS recepta_lek CASCADE;
+DROP table IF EXISTS zgloszenie CASCADE;
+DROP table IF EXISTS umowy CASCADE;
+DROP table IF EXISTS historia_chorob CASCADE;
+DROP table IF EXISTS zatrunieni_wyplaty CASCADE;
+DROP table IF EXISTS naleznosci_za_uslugi CASCADE;
+DROP table IF EXISTS historia_wyplat CASCADE;
+DROP FUNCTION IF EXISTS czy_ubezpieczony (int, timestamp) CASCADE;
+DROP view IF EXISTS osoby_naleznosci CASCADE;
+DROP view IF EXISTS ubezpieczenia_pracownicy CASCADE;
+DROP FUNCTION IF EXISTS czy_ma_umowe (bigint, timestamp) CASCADE;
+DROP view IF EXISTS uslugodawcy_uslugi CASCADE;
+DROP view IF EXISTS personel_medyczny_dane CASCADE;
+DROP view IF EXISTS personel_medyczny_specjalizacje CASCADE;
+DROP view IF EXISTS choroby_osob CASCADE;
+DROP view IF EXISTS recepty_koszt CASCADE;
+DROP view IF EXISTS recepty_refundacja CASCADE;
+DROP view IF EXISTS personel_medyczny_leki CASCADE;
+DROP FUNCTION IF EXISTS pesel_trigger () CASCADE;
+DROP TRIGGER IF EXISTS pesel_check ON osoby CASCADE;

@@ -128,8 +128,8 @@ create table zatrunieni_wyplaty (
 
 create table naleznosci_za_uslugi (
     id serial primary key,
-    id_czlonka_personelu_medycznego references zatrudnieni(id) not null,
-    id_uslugi references uslugi(id) not null,
+    id_czlonka_personelu_medycznego serial references zatrudnieni(id) not null,
+    id_uslugi serial references uslugi(id) not null,
     koszt numeric(9,2)
 );
 
