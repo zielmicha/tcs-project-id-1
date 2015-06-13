@@ -160,10 +160,13 @@ create view lekarze_specjalizacje as SELECT s.id,  array_agg(g.specjalizacja) as
         GROUP BY s.id
         order by 1;
 
-create view choroby_osob as SELECT a.id, a.imie, a.nazwisko, array_agg(c.nazwa) as "choroby"
-FROM osoby a LEFT JOIN (historia_chorob b JOIN choroby c ON b.id_choroby=c.id) ON a.id=b.id_osoby
-GROUP BY a.id
-ORDER BY a.id;
+create view choroby_osob as
+	SELECT a.id, a.imie, a.nazwisko, array_agg(c.nazwa) as "choroby"
+	FROM osoby a LEFT JOIN (historia_chorob b JOIN choroby c ON b.id_choroby=c.id) ON a.id=b.id_osoby
+	GROUP BY a.id
+	ORDER BY a.id;
+
+
 create view recepty_koszt as select recepty.id, recepty.id_osoby,
        sum(koszt * ilosc)
        from recepty
