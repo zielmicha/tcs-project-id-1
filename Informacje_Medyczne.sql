@@ -23,7 +23,7 @@ create table zatrudnieni (
     id serial primary key,
     miejsce_pracy serial references uslugodawcy (id),
     id_członka_personelu_medycznego serial references personel_medyczny (id),
-    stanowisko varchar(150) not null,
+    stanowisko varchar(150) not null
 );
 
 create table specjalizacje (
@@ -116,6 +116,13 @@ create table historia_chorob (
     id_choroby serial references choroby(id) not null
 );
 
+create table zatrunieni_wyplaty (
+    id serial primary key,
+    id_osoby serial references zatrudnieni(id) not null,
+    pensja_miesieczna numeric(9,2),
+    pensja_tygodniowa numeric(9,2),
+    procent_od_uslugi numeric(9,2) check( procent_od_uslugi <= 100 and procent_od_uslugi>=0) 
+);
 
 create function czy_ubezpieczony (czlowiek int, kiedy timestamp default now()) returns bool as $$
        select count(*) > 0
