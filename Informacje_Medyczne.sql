@@ -4,7 +4,7 @@ create table osoby (
        id serial primary key,
        imie varchar(150) not null,
        nazwisko varchar(150) not null,
-       urodzony date check( urodzony <= CURRENT_DATE),
+       urodzony date check( urodzony <= CURRENT_DATE) not null,
        plec varchar(150) check(plec = 'kobieta' or plec = 'mezczyzna') not null, 
        pesel char(11) 
 );
