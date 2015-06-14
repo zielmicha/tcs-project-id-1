@@ -9,9 +9,9 @@ def feminize(surname):
     else:
         return surname
 
-print 'insert into osoby (pesel, imie, nazwisko) values'
+print 'insert into osoby (pesel, imie, nazwisko, plec, urodzony) values'
 
-N = 100
+N = 1000
 
 def cyfra(pesel):
     a = [0] + map(int, pesel)
@@ -27,10 +27,14 @@ for i in xrange(1, N + 1):
     if female:
         surname = feminize(surname)
 
-    pesel = str(random.randrange(0, 10 ** 10)).ljust(10, '0')
+    pesel_i = random.randrange(0, 10 ** 10 / 2) * 2
+    if not female:
+        pesel_i += 1
+    pesel = str(pesel_i).rjust(10, '0')
     pesel += str(cyfra(pesel))
 
-    print "('%s', '%s', '%s')" % (pesel, name, surname),
+    print "('%s', '%s', '%s', '%s', '%s')" % (pesel, name, surname, 'kobieta' if female else 'mezczyzna',
+                                              '19%s-%02d-%02d' % (pesel[:2], int(pesel[2:4]) % 12 + 1, int(pesel[4:6]) % 28 + 1 )),
     if i == N:
         print ';'
     else:

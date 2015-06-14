@@ -5,7 +5,7 @@ create table osoby (
        imie varchar(150) not null,
        nazwisko varchar(150) not null,
        urodzony date check( urodzony <= CURRENT_DATE) not null,
-       plec varchar(150) check(plec = 'kobieta' or plec = 'mezczyzna') not null, 
+       plec varchar(150) check(plec = 'kobieta' or plec = 'mezczyzna') not null,
        pesel char(11) unique not null
 );
 
@@ -76,7 +76,7 @@ create table leki (
        id serial primary key,
        nazwa varchar(150) not null,
        koszt numeric(9, 2)
-       
+
 );
 
 
@@ -121,7 +121,7 @@ create table zatrunieni_wyplaty (
     id_zatrudnionego serial references zatrudnieni(id)  not null,
     pensja_miesieczna numeric(9,2),
     --pensja_tygodniowa numeric(9,2),
-    procent_od_uslugi numeric(9,2) check( procent_od_uslugi <= 100 and procent_od_uslugi>=0) 
+    procent_od_uslugi numeric(9,2) check( procent_od_uslugi <= 100 and procent_od_uslugi>=0)
 );
 
 
@@ -155,21 +155,21 @@ create function czy_ubezpieczony (czlowiek int, kiedy timestamp default now()) r
        select count(*) > 0
               from zgloszenie where id_osoby = czlowiek
                                 and okres @> kiedy;
-                                
-                 
+
+
 $$ language sql;
 
 create view personel_wyplaty_za_uslugi as select osoby.id, osoby.imie, osoby.nazwisko,
                   round(sum(zatrunieni_wyplaty.procent_od_uslugi * naleznosci_za_uslugi.koszt )/100, 2)
-                  from osoby 
+                  from osoby
                     left join zatrudnieni on (zatrudnieni.id_osoby = osoby.id)
                     left join zatrunieni_wyplaty on ( zatrunieni_wyplaty.id_zatrudnionego = zatrudnieni.id)
                     left join naleznosci_za_uslugi on (zatrudnieni.id = naleznosci_za_uslugi.id_zatrudnionego)
                     group by osoby.id;
 
 create view osoby_naleznosci as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel, sum(typy_uslug.koszt)
-                from osoby 
-                  left join uslugi on(osoby.id = uslugi.id_osoby ) 
+                from osoby
+                  left join uslugi on(osoby.id = uslugi.id_osoby )
                   left join typy_uslug on (uslugi.typ = typy_uslug.id)
                   where uslugi.oplacona = 'nie'
                   group by osoby.id;
@@ -182,7 +182,7 @@ create view ubezpieczenia_pracownicy as select osoby.id, osoby.imie, osoby.nazwi
         order by osoby.nazwisko;
 
 
- 
+
 
 create function czy_ma_umowe (placowka bigint, kiedy timestamp) returns bool as $$
        select count(*) > 0
@@ -190,22 +190,22 @@ create function czy_ma_umowe (placowka bigint, kiedy timestamp) returns bool as 
                                and okres @> kiedy;
 $$ language sql;
 
-create view uslugodawcy_uslugi as select 
+create view uslugodawcy_uslugi as select
     uslugodawcy.id, uslugodawcy.nazwa, uslugi.id as "id usługi",
     typy_uslug.nazwa as "nazwa usługi"
-      from uslugodawcy 
+      from uslugodawcy
             join uslugi on uslugodawcy.id = uslugi.id_uslugodawcy
             join typy_uslug on typy_uslug.id = uslugi.typ
-            order by 1, 3; 
+            order by 1, 3;
 
 
 create view personel_medyczny_dane as select personel_medyczny.id, osoby.imie, osoby.nazwisko, osoby.pesel, zatrudnieni.miejsce_pracy, zatrudnieni.stanowisko
-      from personel_medyczny 
+      from personel_medyczny
             left join osoby on personel_medyczny.id = osoby.id
             left join zatrudnieni on personel_medyczny.id = zatrudnieni.id_czlonka_personelu_medycznego
-            order by osoby.nazwisko; 
+            order by osoby.nazwisko;
 
-create view personel_medyczny_specjalizacje as SELECT s.id,  array_agg(g.specjalizacja) as specjalizacja        
+create view personel_medyczny_specjalizacje as SELECT s.id,  array_agg(g.specjalizacja) as specjalizacja
       FROM personel_medyczny s
         LEFT JOIN specjalizacje g ON g.id_czlonka_personelu_medycznego = s.id
         GROUP BY s.id
@@ -232,10 +232,10 @@ create view recepty_refundacja as select recepty.id, recepty.id_osoby,
             join leki on id_leku = leki.id
             group by recepty.id;
 
-create view personel_medyczny_leki as select osoby.imie, osoby.nazwisko, personel_medyczny.id, 
-recepty.id_osoby as "pacjent", recepty.id as "id recepty", 
+create view personel_medyczny_leki as select osoby.imie, osoby.nazwisko, personel_medyczny.id,
+recepty.id_osoby as "pacjent", recepty.id as "id recepty",
 recepty.data_wystawienia as "data",leki.nazwa, recepta_lek.zrealizowano
-  
+
        from personel_medyczny
             join osoby on osoby.id = personel_medyczny.id_osoby
             join recepty on personel_medyczny.id = recepty.id_czlonka_personelu_medycznego
@@ -262,32 +262,12 @@ begin
    a := regexp_split_to_array(new.pesel, '')::int[];
    if new.plec = 'kobieta' then
       if a[10]%2 = 1 then
-          raise exception 'Niepoprawny PESEL';
+          raise exception 'Niepoprawny PESEL (kobieta %)', a;
       end if;
     else if a[10]%2 = 0 then
-          raise exception 'Niepoprawny PESEL';
+          raise exception 'Niepoprawny PESEL (mężczyzna %)', a;
          end if;
     end if;
-    day := 10 * a[4] + a[5];
-    yearspec := (10 * a[2] + a[3])/20;
-    month := (10 * a[2] + a[3])%20;
-    year := 10 * a[1] + a[4];
-    case yearspec 
-          when 0 then 
-              year := 1900 + year;
-          when 1 then 
-              year := 2000 + year;
-          when 2 then 
-               year := 2100 + year;
-          when 3 then 
-               year := 2200 + year;
-          else 
-              year := 1800 + year;
-    end case;
-    if extract(year from new.urodzony) != year || extract(month from new.urodzony) != month || extract(day from new.urodzony) then
-        raise exception 'Niepoprawny PESEL';
-    end if;
- 
 
    cyfra := 1*a[1] + 3*a[2] + 7*a[3] + 9*a[4] + 1*a[5] + 3*a[6] + 7*a[7] + 9*a[8]
     + 1*a[9] + 3*a[10] + a[11];
@@ -303,4 +283,3 @@ create trigger pesel_check before insert or update on osoby
 for each row execute procedure pesel_trigger();
 
 end;
-
