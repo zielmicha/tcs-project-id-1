@@ -18,7 +18,7 @@ create table uslugodawcy (
 create table zatrudnieni (
     id serial primary key,
     id_osoby serial references osoby(id) not null,
-    miejsce_pracy serial references uslugodawcy (id),
+    miejsce_pracy serial references uslugodawcy (id) not null,
     stanowisko varchar(150) not null
 );
 
