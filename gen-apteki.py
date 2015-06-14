@@ -32,3 +32,13 @@ for i in xrange(1, N + 1):
         'Długa %d' % random.randrange(10000),
         random.randrange(1, 11)),
     print ';' if i == N else ','
+
+
+print 'insert into uslugodawcy (nazwa, adres) values'
+N = 10
+
+for i in xrange(1, N + 1):
+    print "('Szpital %s', '%s')" % (
+        random.choice(surnames),
+        'Kopernika %d' % random.randrange(10000)),
+    print ';' if i == N else ','
