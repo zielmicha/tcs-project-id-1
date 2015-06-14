@@ -122,14 +122,6 @@ create function czy_ubezpieczony (czlowiek int, kiedy timestamp default now()) r
 $$ language sql;
 
 
-create view personel_wyplaty_za_uslugi as select osoby.id, osoby.imie, osoby.nazwisko,
-                  round(sum(zatrunieni_wyplaty.procent_od_uslugi * naleznosci_za_uslugi.koszt )/100, 2) as "suma"
-                  from osoby
-                    left join zatrudnieni on (zatrudnieni.id_osoby = osoby.id)
-                    left join zatrunieni_wyplaty on ( zatrunieni_wyplaty.id_zatrudnionego = zatrudnieni.id)
-                    left join naleznosci_za_uslugi on (zatrudnieni.id = naleznosci_za_uslugi.id_zatrudnionego)
-                    group by osoby.id;
-
 create view osoby_naleznosci as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel, sum(typy_uslug.koszt) as "suma"
                 from osoby
                   left join uslugi on(osoby.id = uslugi.id_osoby )
@@ -243,6 +235,14 @@ create view uslugi_koszt as select
             (select koszt from typy_uslug where typy_uslug.id = typ)
        end) as koszt
        from uslugi;
+
+create view nieprawidlowe_uslugi as select
+      id_pracownika,
+       (select miejsce_pracy from zatrudnieni
+               where id = id_pracownika) as placowka,
+       id_osoby, typ, opis, oplacona, kiedy
+       from uslugi
+       where czy_ubezpieczony(id_osoby, kiedy);
 
 create view uslugi_koszt_dla_plac as select
        placowka, sum(koszt)
