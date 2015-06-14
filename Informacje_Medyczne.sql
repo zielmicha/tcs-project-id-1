@@ -17,14 +17,14 @@ create table uslugodawcy (
 
 create table zatrudnieni (
     id serial primary key,
-    id_osoby serial references osoby(id) not null,
-    miejsce_pracy serial references uslugodawcy (id),
+    id_osoby int references osoby(id) not null,
+    miejsce_pracy int references uslugodawcy (id),
     stanowisko varchar(150) not null
 );
 
 create table specjalizacje (
        id serial primary key,
-       id_czlonka_personelu_medycznego serial references zatrudnieni(id) not null,
+       id_czlonka_personelu_medycznego int references zatrudnieni(id) not null,
        specjalizacja varchar(150) not null
 );
 
@@ -37,9 +37,9 @@ create table typy_uslug (
 
 create table uslugi (
        id serial primary key,
-       id_czlonka_personelu_medycznego serial references zatrudnieni(id) not null,
-       id_osoby serial references osoby(id) not null,
-       typ serial references typy_uslug(id) not null,
+       id_czlonka_personelu_medycznego int references zatrudnieni(id) not null,
+       id_osoby int references osoby(id) not null,
+       typ int references typy_uslug(id) not null,
        opis text,
        oplacona varchar check(oplacona = 'tak' or oplacona = 'nie') not null,
        kiedy timestamp
@@ -55,14 +55,14 @@ create table apteki (
        id serial primary key,
        nazwa varchar(150) not null,
        adres varchar(150) not null,
-       id_oddzialu serial references oddzialy(id) not null
+       id_oddzialu int references oddzialy(id) not null
 );
 
 create table recepty (
        id serial primary key,
-       id_czlonka_personelu_medycznego serial references zatrudnieni(id) not null,
-       id_osoby serial references osoby(id) not null,
-       id_apteki serial references apteki(id),
+       id_czlonka_personelu_medycznego int references zatrudnieni(id) not null,
+       id_osoby int references osoby(id) not null,
+       id_apteki int references apteki(id),
        data_wystawienia timestamp not null
 );
 
@@ -78,38 +78,38 @@ create table choroby (
 );
 
 create table recepta_lek (
-       id_recepty serial references recepty(id) not null,
-       id_leku serial references leki(id) not null,
+       id_recepty int references recepty(id) not null,
+       id_leku int references leki(id) not null,
        refundacja int default 0 check (refundacja between 0 and 100),
        zrealizowano int default 0 check(zrealizowano between 0 and 1),
-       choroba serial references choroby(id),
+       choroba int references choroby(id),
        ilosc int,
        okres tsrange
 );
 
 create table zgloszenie (
        id serial primary key,
-       id_osoby serial references osoby(id) not null,
-       id_oddzialu serial references oddzialy(id) not null,
+       id_osoby int references osoby(id) not null,
+       id_oddzialu int references oddzialy(id) not null,
        okres tsrange not null
 );
 
 create table umowy (
        id serial primary key,
-       id_oddzialu serial references oddzialy(id) not null,
-       id_uslugodawcy serial references uslugodawcy(id) not null,
+       id_oddzialu int references oddzialy(id) not null,
+       id_uslugodawcy int references uslugodawcy(id) not null,
        okres tsrange not null
 );
 
 create table historia_chorob (
     id serial primary key,
-    id_osoby serial references osoby(id) not null,
-    id_choroby serial references choroby(id) not null
+    id_osoby int references osoby(id) not null,
+    id_choroby int references choroby(id) not null
 );
 
 create table historia_wyplat (
     id serial primary key,
-    id_osoby serial references zatrudnieni(id) not null,
+    id_osoby int references zatrudnieni(id) not null,
     wyplata numeric(9,2) check(wyplata > 0) not null,
     tytul varchar(150) not null
 );
