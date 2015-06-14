@@ -216,12 +216,19 @@ recepty.data_wystawienia as "data",leki.nazwa, recepta_lek.zrealizowano
             order by 2, 1, zatrudnieni.id;
 
 create view uslugi_koszt as select
-       id_czlonka_personelu_medycznego, id_osoby, typ, opis, oplacona, kiedy,
-       case when oplacona = 'tak' or not czy_ubezpieczony(id_osoby, kiedy)
+       id_czlonka_personelu_medycznego,
+       (select miejsce_pracy from zatrudnieni
+               where id = id_czlonka_personelu_medycznego) as placowka,
+       id_osoby, typ, opis, oplacona, kiedy,
+       (case when oplacona = 'tak' or not czy_ubezpieczony(id_osoby, kiedy)
        then 0 else
             (select koszt from typy_uslug where typy_uslug.id = typ)
-       end
+       end) as koszt
        from uslugi;
+
+create view uslugi_koszt_dla_plac as select
+       placowka, sum(koszt)
+       from uslugi_koszt group by placowka;
 
 create function pesel_trigger() returns trigger AS $$
 declare
