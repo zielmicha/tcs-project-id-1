@@ -180,6 +180,10 @@ create view uslugodawcy_uslugi as select
             join typy_uslug on typy_uslug.id = uslugi.typ
             order by 1, 3;
 
+create view uslugi_bez_ubezpieczenia as select a.id as "id_osoby", a.imie, a.nazwisko, b.id as "id_uslugi", b.opis, b.kiedy
+FROM osoby a JOIN uslugi b ON a.id=b.id_osoby
+WHERE czy_ubezpieczony(a.id, b.kiedy) = false
+ORDER BY 1, 4;
 
 create view zatrudnieni_dane as select zatrudnieni.id, osoby.imie, osoby.nazwisko, osoby.pesel
       from zatrudnieni
