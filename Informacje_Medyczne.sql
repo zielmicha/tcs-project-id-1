@@ -123,14 +123,14 @@ $$ language sql;
 
 
 create view personel_wyplaty_za_uslugi as select osoby.id, osoby.imie, osoby.nazwisko,
-                  round(sum(zatrunieni_wyplaty.procent_od_uslugi * naleznosci_za_uslugi.koszt )/100, 2)
+                  round(sum(zatrunieni_wyplaty.procent_od_uslugi * naleznosci_za_uslugi.koszt )/100, 2) as "suma"
                   from osoby
                     left join zatrudnieni on (zatrudnieni.id_osoby = osoby.id)
                     left join zatrunieni_wyplaty on ( zatrunieni_wyplaty.id_zatrudnionego = zatrudnieni.id)
                     left join naleznosci_za_uslugi on (zatrudnieni.id = naleznosci_za_uslugi.id_zatrudnionego)
                     group by osoby.id;
 
-create view osoby_naleznosci as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel, sum(typy_uslug.koszt)
+create view osoby_naleznosci as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel, sum(typy_uslug.koszt) as "suma"
                 from osoby
                   left join uslugi on(osoby.id = uslugi.id_osoby )
                   left join typy_uslug on (uslugi.typ = typy_uslug.id)
@@ -138,7 +138,7 @@ create view osoby_naleznosci as select osoby.id, osoby.imie, osoby.nazwisko, oso
                   group by osoby.id;
 
 create view ubezpieczenia_pracownicy as select distinct osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel,
-      case when czy_ubezpieczony(zatrudnieni.id_osoby) then 'UBEZPIECZONY' else 'BRAK UBEZPIECZENIA' end
+      (case when czy_ubezpieczony(zatrudnieni.id_osoby) then 'UBEZPIECZONY' else 'BRAK UBEZPIECZENIA' end) as "czy_ubezpieczony"
       from zatrudnieni
         join osoby on zatrudnieni.id_osoby = osoby.id
         order by osoby.nazwisko;
@@ -185,7 +185,7 @@ create view choroby_osob as
   order by a.id;
 
 create view recepty_koszt as select recepty.id, recepty.id_osoby,
-       sum(koszt * ilosc),
+       sum(koszt * ilosc) as "koszt",
        czy_ubezpieczony(recepty.id_osoby, recepty.data_wystawienia),
        czy_personel_jest_ok(recepty.id_pracownika, recepty.data_wystawienia)
        from recepty
