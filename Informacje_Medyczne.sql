@@ -90,7 +90,6 @@ create table recepta_lek (
        choroba serial references choroby(id),
        ilosc int,
        okres tsrange
-
 );
 
 create table zgloszenie (
@@ -216,7 +215,6 @@ recepty.data_wystawienia as "data",leki.nazwa, recepta_lek.zrealizowano
             join recepta_lek on id_recepty = recepty.id
             join leki on recepta_lek.id_leku =  leki.id
             order by 2, 1, personel_medyczny.id;
-
 
 create function pesel_trigger() returns trigger AS $$
 declare
