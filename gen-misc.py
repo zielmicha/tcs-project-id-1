@@ -16,6 +16,6 @@ print ', '.join("('Lek na %s', %d)" % (
     random.randrange(10, 1000)) for name in open('choroby.txt') ) + ';'
 
 
-print 'insert into specjalizacje (specjalizacja, id_czlonka_personelu_medycznego) values'
+print 'insert into specjalizacje (specjalizacja, id_pracownika) values'
 print ', '.join("('%s', %d)" % (
     random.choice(['Lekarz rodzinny', 'Chirurg', 'Diabetolog']), i) for i in xrange(1, 30)) + ';'

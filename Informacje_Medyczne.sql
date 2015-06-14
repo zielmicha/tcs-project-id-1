@@ -24,7 +24,7 @@ create table zatrudnieni (
 
 create table specjalizacje (
        id serial primary key,
-       id_czlonka_personelu_medycznego int references zatrudnieni(id) not null,
+       id_pracownika int references zatrudnieni(id) not null,
        specjalizacja varchar(150) not null
 );
 
@@ -37,7 +37,7 @@ create table typy_uslug (
 
 create table uslugi (
        id serial primary key,
-       id_czlonka_personelu_medycznego int references zatrudnieni(id) not null,
+       id_pracownika int references zatrudnieni(id) not null,
        id_osoby int references osoby(id) not null,
        typ int references typy_uslug(id) not null,
        opis text,
@@ -60,7 +60,7 @@ create table apteki (
 
 create table recepty (
        id serial primary key,
-       id_czlonka_personelu_medycznego int references zatrudnieni(id) not null,
+       id_pracownika int references zatrudnieni(id) not null,
        id_osoby int references osoby(id) not null,
        id_apteki int references apteki(id),
        data_wystawienia timestamp not null
@@ -162,7 +162,7 @@ create view uslugodawcy_uslugi as select
     typy_uslug.nazwa as "nazwa usługi"
       from uslugodawcy
             join zatrudnieni on zatrudnieni.miejsce_pracy = uslugodawcy.id
-            join uslugi on zatrudnieni.id = uslugi.id_czlonka_personelu_medycznego
+            join uslugi on zatrudnieni.id = uslugi.id_pracownika
             join typy_uslug on typy_uslug.id = uslugi.typ
             order by 1, 3;
 
@@ -174,7 +174,7 @@ create view zatrudnieni_dane as select zatrudnieni.id, osoby.imie, osoby.nazwisk
 
 create view zatrudnieni_specjalizacje as SELECT s.id,  array_agg(g.specjalizacja) as specjalizacja
       from zatrudnieni s
-        left join specjalizacje g ON g.id_czlonka_personelu_medycznego = s.id
+        left join specjalizacje g ON g.id_pracownika = s.id
         group by s.id
         order by 1;
 
@@ -187,7 +187,7 @@ create view choroby_osob as
 create view recepty_koszt as select recepty.id, recepty.id_osoby,
        sum(koszt * ilosc),
        czy_ubezpieczony(recepty.id_osoby, recepty.data_wystawienia),
-       czy_personel_jest_ok(recepty.id_czlonka_personelu_medycznego, recepty.data_wystawienia)
+       czy_personel_jest_ok(recepty.id_pracownika, recepty.data_wystawienia)
        from recepty
             left join recepta_lek on id_recepty = recepty.id
             join leki on id_leku = leki.id
@@ -201,7 +201,7 @@ create view recepty_refundacja as select recepty.id, recepty.id_osoby,
             group by recepty.id
             having
             czy_ubezpieczony(recepty.id_osoby, recepty.data_wystawienia) and
-            czy_personel_jest_ok(recepty.id_czlonka_personelu_medycznego,
+            czy_personel_jest_ok(recepty.id_pracownika,
                                  recepty.data_wystawienia);
 
 create view zatrudnieni_leki as select osoby.imie, osoby.nazwisko, zatrudnieni.id,
@@ -210,15 +210,15 @@ recepty.data_wystawienia as "data",leki.nazwa, recepta_lek.zrealizowano
 
        from zatrudnieni
             join osoby on osoby.id = zatrudnieni.id_osoby
-            join recepty on zatrudnieni.id = recepty.id_czlonka_personelu_medycznego
+            join recepty on zatrudnieni.id = recepty.id_pracownika
             join recepta_lek on id_recepty = recepty.id
             join leki on recepta_lek.id_leku =  leki.id
             order by 2, 1, zatrudnieni.id;
 
 create view uslugi_koszt as select
-       id_czlonka_personelu_medycznego,
+       id_pracownika,
        (select miejsce_pracy from zatrudnieni
-               where id = id_czlonka_personelu_medycznego) as placowka,
+               where id = id_pracownika) as placowka,
        id_osoby, typ, opis, oplacona, kiedy,
        (case when oplacona = 'tak' or not czy_ubezpieczony(id_osoby, kiedy)
        then 0 else

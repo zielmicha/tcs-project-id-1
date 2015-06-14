@@ -26,7 +26,7 @@ print ', '.join("(%d, %d, %s)" % (random.randrange(1, 10),
                 for i in xrange(1000) ) + ';'
 
 
-print 'insert into recepty (id_czlonka_personelu_medycznego, id_osoby, id_apteki, data_wystawienia) values'
+print 'insert into recepty (id_pracownika, id_osoby, id_apteki, data_wystawienia) values'
 print ', '.join("(%d, %d, %d, '%s')" %
                 (
                     random.randrange(1, 10), random.randrange(1, 10),
@@ -58,7 +58,7 @@ print ', '.join("('%s', %d, %s)" %
                 for i in xrange(100) ) + ';'
 
 
-print 'insert into uslugi (id_czlonka_personelu_medycznego, id_osoby, typ, opis, oplacona, kiedy) values'
+print 'insert into uslugi (id_pracownika, id_osoby, typ, opis, oplacona, kiedy) values'
 print ', '.join("(%d, %d, %d, '%s', '%s', '%s')" % (
     random.randrange(1, 10),
     random.randrange(1, 1000),
