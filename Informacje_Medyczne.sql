@@ -38,7 +38,6 @@ create table typy_uslug (
        nazwa varchar not null,
        koszt numeric(9, 2),
        obowiazuje tsrange not null
-
 );
 
 create table uslugi (
@@ -76,9 +75,7 @@ create table leki (
        id serial primary key,
        nazwa varchar(150) not null,
        koszt numeric(9, 2)
-
 );
-
 
 create table choroby (
       id serial primary key,
@@ -116,31 +113,6 @@ create table historia_chorob (
     id_choroby serial references choroby(id) not null
 );
 
-create table zatrunieni_wyplaty (
-    id serial primary key,
-    id_zatrudnionego serial references zatrudnieni(id)  not null,
-    pensja_miesieczna numeric(9,2),
-    --pensja_tygodniowa numeric(9,2),
-    procent_od_uslugi numeric(9,2) check( procent_od_uslugi <= 100 and procent_od_uslugi>=0)
-);
-
-
-
-create table naleznosci_za_uslugi (
-    id serial primary key,
-    id_zatrudnionego serial references zatrudnieni(id) not null,
-    id_uslugi serial references uslugi(id) not null,
-    koszt numeric(9,2),
-    zaplacono varchar(5) check(zaplacono = 'tak' or zaplacono = 'nie')
-
-);
-/*
-create table oplaty_za_uslugi (
-    id serial primary key,
-    id_osoby references references(osoby.id) not null,
-    id_uslugi serial references uslugi(id) not null,
-);*/
-
 create table historia_wyplat (
     id serial primary key,
     id_osoby serial references zatrudnieni(id) not null,
@@ -148,16 +120,13 @@ create table historia_wyplat (
     tytul varchar(150) not null
 );
 
-
-
-
 create function czy_ubezpieczony (czlowiek int, kiedy timestamp default now()) returns bool as $$
        select count(*) > 0
               from zgloszenie where id_osoby = czlowiek
                                 and okres @> kiedy;
 
-
 $$ language sql;
+
 
 create view personel_wyplaty_za_uslugi as select osoby.id, osoby.imie, osoby.nazwisko,
                   round(sum(zatrunieni_wyplaty.procent_od_uslugi * naleznosci_za_uslugi.koszt )/100, 2)
@@ -174,20 +143,26 @@ create view osoby_naleznosci as select osoby.id, osoby.imie, osoby.nazwisko, oso
                   where uslugi.oplacona = 'nie'
                   group by osoby.id;
 
-create view ubezpieczenia_pracownicy as select osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel,
-      CASE WHEN czy_ubezpieczony(personel_medyczny.id_osoby) THEN 'UBEZPIECZONY' ELSE 'BRAK UBEZPIECZENIA' END
+create view ubezpieczenia_pracownicy as select distinct osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel,
+      case when czy_ubezpieczony(personel_medyczny.id_osoby) then 'UBEZPIECZONY' else 'BRAK UBEZPIECZENIA' end
       from zatrudnieni
         left join personel_medyczny on zatrudnieni.id_czlonka_personelu_medycznego = personel_medyczny.id
         join osoby on personel_medyczny.id_osoby = osoby.id
         order by osoby.nazwisko;
 
 
-
-
 create function czy_ma_umowe (placowka bigint, kiedy timestamp) returns bool as $$
        select count(*) > 0
               from umowy where id_uslugodawcy = placowka
                                and okres @> kiedy;
+$$ language sql;
+
+create function czy_personel_jest_ok (personel int, kiedy timestamp default now())
+       returns bool as $$
+      select count(*) > 0
+              from zatrudnieni
+              where id_czlonka_personelu_medycznego = personel
+                and czy_ma_umowe(miejsce_pracy, kiedy);
 $$ language sql;
 
 create view uslugodawcy_uslugi as select
@@ -206,27 +181,28 @@ create view personel_medyczny_dane as select personel_medyczny.id, osoby.imie, o
             order by osoby.nazwisko;
 
 create view personel_medyczny_specjalizacje as SELECT s.id,  array_agg(g.specjalizacja) as specjalizacja
-      FROM personel_medyczny s
-        LEFT JOIN specjalizacje g ON g.id_czlonka_personelu_medycznego = s.id
-        GROUP BY s.id
+      from personel_medyczny s
+        left join specjalizacje g ON g.id_czlonka_personelu_medycznego = s.id
+        group by s.id
         order by 1;
 
 create view choroby_osob as
-  SELECT a.id, a.imie, a.nazwisko, array_agg(c.nazwa) as "choroby"
-  FROM osoby a LEFT JOIN (historia_chorob b JOIN choroby c ON b.id_choroby=c.id) ON a.id=b.id_osoby
-  GROUP BY a.id
-  ORDER BY a.id;
-
+  select a.id, a.imie, a.nazwisko, array_agg(c.nazwa) as "choroby"
+  from osoby a left join (historia_chorob b JOIN choroby c ON b.id_choroby=c.id) ON a.id=b.id_osoby
+  group by a.id
+  order by a.id;
 
 create view recepty_koszt as select recepty.id, recepty.id_osoby,
-       sum(koszt * ilosc)
+       sum(koszt * ilosc),
+       czy_ubezpieczony(recepty.id_osoby, recepty.data_wystawienia),
+       czy_personel_jest_ok(recepty.id_czlonka_personelu_medycznego, recepty.data_wystawienia)
        from recepty
             left join recepta_lek on id_recepty = recepty.id
             join leki on id_leku = leki.id
             group by recepty.id;
 
 create view recepty_refundacja as select recepty.id, recepty.id_osoby,
-       sum( (koszt * ilosc * refundacja)::numeric / 100  ) as "refundacja"
+       sum( (koszt * ilosc * refundacja)::numeric / 100  )::numeric(9, 2) as "refundacja"
        from recepty
             left join recepta_lek on id_recepty = recepty.id
             join leki on id_leku = leki.id
@@ -242,8 +218,6 @@ recepty.data_wystawienia as "data",leki.nazwa, recepta_lek.zrealizowano
             join recepta_lek on id_recepty = recepty.id
             join leki on recepta_lek.id_leku =  leki.id
             order by 2, 1, personel_medyczny.id;
-
-
 
 
 create function pesel_trigger() returns trigger AS $$
