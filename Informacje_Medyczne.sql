@@ -39,10 +39,10 @@ create table uslugi (
        id serial primary key,
        id_czlonka_personelu_medycznego serial references zatrudnieni(id) not null,
        id_osoby serial references osoby(id) not null,
-       id_uslugodawcy serial references uslugodawcy(id) not null,
        typ serial references typy_uslug(id) not null,
        opis text,
-       oplacona varchar check(oplacona = 'tak' or oplacona = 'nie') not null
+       oplacona varchar check(oplacona = 'tak' or oplacona = 'nie') not null,
+       kiedy timestamp
 );
 
 create table oddzialy (
@@ -161,7 +161,8 @@ create view uslugodawcy_uslugi as select
     uslugodawcy.id, uslugodawcy.nazwa, uslugi.id as "id usługi",
     typy_uslug.nazwa as "nazwa usługi"
       from uslugodawcy
-            join uslugi on uslugodawcy.id = uslugi.id_uslugodawcy
+            join zatrudnieni on zatrudnieni.miejsce_pracy = uslugodawcy.id
+            join uslugi on zatrudnieni.id = uslugi.id_czlonka_personelu_medycznego
             join typy_uslug on typy_uslug.id = uslugi.typ
             order by 1, 3;
 
@@ -197,7 +198,11 @@ create view recepty_refundacja as select recepty.id, recepty.id_osoby,
        from recepty
             left join recepta_lek on id_recepty = recepty.id
             join leki on id_leku = leki.id
-            group by recepty.id;
+            group by recepty.id
+            having
+            czy_ubezpieczony(recepty.id_osoby, recepty.data_wystawienia) and
+            czy_personel_jest_ok(recepty.id_czlonka_personelu_medycznego,
+                                 recepty.data_wystawienia);
 
 create view zatrudnieni_leki as select osoby.imie, osoby.nazwisko, zatrudnieni.id,
 recepty.id_osoby as "pacjent", recepty.id as "id recepty",
@@ -209,6 +214,14 @@ recepty.data_wystawienia as "data",leki.nazwa, recepta_lek.zrealizowano
             join recepta_lek on id_recepty = recepty.id
             join leki on recepta_lek.id_leku =  leki.id
             order by 2, 1, zatrudnieni.id;
+
+create view uslugi_koszt as select
+       id_czlonka_personelu_medycznego, id_osoby, typ, opis, oplacona, kiedy,
+       case when oplacona = 'tak' or not czy_ubezpieczony(id_osoby, kiedy)
+       then 0 else
+            (select koszt from typy_uslug where typy_uslug.id = typ)
+       end
+       from uslugi;
 
 create function pesel_trigger() returns trigger AS $$
 declare

@@ -1,4 +1,5 @@
 import random
+import os
 
 def gen_date():
     d = lambda v: random.randrange(1, v)
@@ -46,3 +47,23 @@ print ', '.join("(%d, %d, %d, %d, %d, %d, %s)" %
                     random.randrange(1, 10),
                     gen_range())
                 for i in xrange(40) ) + ';'
+
+
+print 'insert into typy_uslug (nazwa, koszt, obowiazuje) values'
+print ', '.join("('%s', %d, %s)" %
+                (
+                    os.urandom(5).encode('hex'),
+                    random.randrange(10, 10000),
+                    gen_range())
+                for i in xrange(100) ) + ';'
+
+
+print 'insert into uslugi (id_czlonka_personelu_medycznego, id_osoby, typ, opis, oplacona, kiedy) values'
+print ', '.join("(%d, %d, %d, '%s', '%s', '%s')" % (
+    random.randrange(1, 10),
+    random.randrange(1, 1000),
+    random.randrange(1, 100),
+    os.urandom(16).encode('hex'),
+    random.choice(['tak', 'nie']),
+    gen_date()
+) for i in xrange(50) ) + ';'
