@@ -184,7 +184,7 @@ create view ubezpieczenia_pracownicy as select osoby.id, osoby.imie, osoby.nazwi
 
 
 
-create function czy_ma_umowe (placowka bigint, kiedy timestamp) returns bool as $$
+create function czy_ma_umowe (placowka bigint, kiedy timestamp default now()) returns bool as $$
        select count(*) > 0
               from umowy where id_uslugodawcy = placowka
                                and okres @> kiedy;
@@ -199,11 +199,10 @@ create view uslugodawcy_uslugi as select
             order by 1, 3;
 
 
-create view personel_medyczny_dane as select personel_medyczny.id, osoby.imie, osoby.nazwisko, osoby.pesel, zatrudnieni.miejsce_pracy, zatrudnieni.stanowisko
+create view personel_medyczny_dane as select personel_medyczny.id, osoby.imie, osoby.nazwisko, osoby.pesel
       from personel_medyczny
-            left join osoby on personel_medyczny.id = osoby.id
-            left join zatrudnieni on personel_medyczny.id = zatrudnieni.id_czlonka_personelu_medycznego
-            order by osoby.nazwisko;
+            left join osoby on personel_medyczny.id_osoby = osoby.id
+            order by osoby.nazwisko, osoby.id;
 
 create view personel_medyczny_specjalizacje as SELECT s.id,  array_agg(g.specjalizacja) as specjalizacja
       FROM personel_medyczny s
