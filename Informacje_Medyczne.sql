@@ -149,6 +149,20 @@ create function czy_ma_umowe (placowka bigint, kiedy timestamp default now()) re
                                and okres @> kiedy;
 $$ language sql;
 
+create function koszt_uslug(osoba int) returns numeric(9, 2) as
+$$
+declare a numeric(9, 2);
+begin
+a=(
+SELECT SUM(b.koszt)
+FROM uslugi a JOIN typy_uslug b ON a.typ=b.id
+WHERE a.id_osoby=osoba
+);
+return a;
+end;
+$$
+language plpgsql;
+
 create function czy_personel_jest_ok (personel int, kiedy timestamp default now())
        returns bool as $$
       select count(*) > 0
