@@ -14,22 +14,17 @@ create table uslugodawcy (
        nazwa varchar(150) not null,
        adres varchar(150) not null
 );
-create table personel_medyczny (
-       id serial primary key,
-       id_osoby serial references osoby(id) not null
-);
 
 create table zatrudnieni (
     id serial primary key,
     id_osoby serial references osoby(id) not null,
     miejsce_pracy serial references uslugodawcy (id),
-    id_czlonka_personelu_medycznego serial references personel_medyczny (id),
     stanowisko varchar(150) not null
 );
 
 create table specjalizacje (
        id serial primary key,
-       id_czlonka_personelu_medycznego serial references personel_medyczny(id) not null,
+       id_czlonka_personelu_medycznego serial references zatrudnieni(id) not null,
        specjalizacja varchar(150) not null
 );
 
@@ -42,7 +37,7 @@ create table typy_uslug (
 
 create table uslugi (
        id serial primary key,
-       id_czlonka_personelu_medycznego serial references personel_medyczny(id) not null,
+       id_czlonka_personelu_medycznego serial references zatrudnieni(id) not null,
        id_osoby serial references osoby(id) not null,
        id_uslugodawcy serial references uslugodawcy(id) not null,
        typ serial references typy_uslug(id) not null,
@@ -65,7 +60,7 @@ create table apteki (
 
 create table recepty (
        id serial primary key,
-       id_czlonka_personelu_medycznego serial references personel_medyczny(id) not null,
+       id_czlonka_personelu_medycznego serial references zatrudnieni(id) not null,
        id_osoby serial references osoby(id) not null,
        id_apteki serial references apteki(id),
        data_wystawienia timestamp not null
@@ -143,10 +138,9 @@ create view osoby_naleznosci as select osoby.id, osoby.imie, osoby.nazwisko, oso
                   group by osoby.id;
 
 create view ubezpieczenia_pracownicy as select distinct osoby.id, osoby.imie, osoby.nazwisko, osoby.pesel,
-      case when czy_ubezpieczony(personel_medyczny.id_osoby) then 'UBEZPIECZONY' else 'BRAK UBEZPIECZENIA' end
+      case when czy_ubezpieczony(zatrudnieni.id_osoby) then 'UBEZPIECZONY' else 'BRAK UBEZPIECZENIA' end
       from zatrudnieni
-        left join personel_medyczny on zatrudnieni.id_czlonka_personelu_medycznego = personel_medyczny.id
-        join osoby on personel_medyczny.id_osoby = osoby.id
+        join osoby on zatrudnieni.id_osoby = osoby.id
         order by osoby.nazwisko;
 
 create function czy_ma_umowe (placowka bigint, kiedy timestamp default now()) returns bool as $$
@@ -159,7 +153,7 @@ create function czy_personel_jest_ok (personel int, kiedy timestamp default now(
        returns bool as $$
       select count(*) > 0
               from zatrudnieni
-              where id_czlonka_personelu_medycznego = personel
+              where id = personel
                 and czy_ma_umowe(miejsce_pracy, kiedy);
 $$ language sql;
 
@@ -172,13 +166,13 @@ create view uslugodawcy_uslugi as select
             order by 1, 3;
 
 
-create view personel_medyczny_dane as select personel_medyczny.id, osoby.imie, osoby.nazwisko, osoby.pesel
-      from personel_medyczny
-            left join osoby on personel_medyczny.id_osoby = osoby.id
+create view zatrudnieni_dane as select zatrudnieni.id, osoby.imie, osoby.nazwisko, osoby.pesel
+      from zatrudnieni
+            left join osoby on zatrudnieni.id_osoby = osoby.id
             order by osoby.nazwisko, osoby.id;
 
-create view personel_medyczny_specjalizacje as SELECT s.id,  array_agg(g.specjalizacja) as specjalizacja
-      from personel_medyczny s
+create view zatrudnieni_specjalizacje as SELECT s.id,  array_agg(g.specjalizacja) as specjalizacja
+      from zatrudnieni s
         left join specjalizacje g ON g.id_czlonka_personelu_medycznego = s.id
         group by s.id
         order by 1;
@@ -205,16 +199,16 @@ create view recepty_refundacja as select recepty.id, recepty.id_osoby,
             join leki on id_leku = leki.id
             group by recepty.id;
 
-create view personel_medyczny_leki as select osoby.imie, osoby.nazwisko, personel_medyczny.id,
+create view zatrudnieni_leki as select osoby.imie, osoby.nazwisko, zatrudnieni.id,
 recepty.id_osoby as "pacjent", recepty.id as "id recepty",
 recepty.data_wystawienia as "data",leki.nazwa, recepta_lek.zrealizowano
 
-       from personel_medyczny
-            join osoby on osoby.id = personel_medyczny.id_osoby
-            join recepty on personel_medyczny.id = recepty.id_czlonka_personelu_medycznego
+       from zatrudnieni
+            join osoby on osoby.id = zatrudnieni.id_osoby
+            join recepty on zatrudnieni.id = recepty.id_czlonka_personelu_medycznego
             join recepta_lek on id_recepty = recepty.id
             join leki on recepta_lek.id_leku =  leki.id
-            order by 2, 1, personel_medyczny.id;
+            order by 2, 1, zatrudnieni.id;
 
 create function pesel_trigger() returns trigger AS $$
 declare
