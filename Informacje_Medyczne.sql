@@ -89,7 +89,7 @@ create table recepta_lek (
        id_recepty serial references recepty(id) not null,
        id_leku serial references leki(id) not null,
        refundacja int default 0 check (refundacja between 0 and 100),
-       zrealizowano int default 0,
+       zrealizowano int default 0 check(zrealizowano between 0 and 1),
        choroba serial references choroby(id),
        ilosc int,
        okres tsrange
